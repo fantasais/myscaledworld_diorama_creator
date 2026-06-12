@@ -16,7 +16,10 @@ export const PRODUCTS: Product[] = [
     layerType: "floor",
     layerOrder: 1,
     stlUrl: null,
-    geometryHint: "box",
+    geometryHint: "flat_plane",
+    boundingBox: { width: 5.5, height: 0.08, depth: 4 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ig-base-tiled",
@@ -32,7 +35,10 @@ export const PRODUCTS: Product[] = [
     layerType: "floor",
     layerOrder: 1,
     stlUrl: null,
-    geometryHint: "box",
+    geometryHint: "flat_plane",
+    boundingBox: { width: 5.5, height: 0.08, depth: 4 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ig-base-industrial",
@@ -48,7 +54,10 @@ export const PRODUCTS: Product[] = [
     layerType: "floor",
     layerOrder: 1,
     stlUrl: null,
-    geometryHint: "box",
+    geometryHint: "flat_plane",
+    boundingBox: { width: 5.5, height: 0.08, depth: 4 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
 
   // ── Indian Garage – Walls ────────────────────────────────────
@@ -66,7 +75,10 @@ export const PRODUCTS: Product[] = [
     layerType: "wall",
     layerOrder: 2,
     stlUrl: null,
-    geometryHint: "box",
+    geometryHint: "thin_box",
+    boundingBox: { width: 5.5, height: 1.8, depth: 0.12 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ig-wall-corrugated",
@@ -82,7 +94,10 @@ export const PRODUCTS: Product[] = [
     layerType: "wall",
     layerOrder: 2,
     stlUrl: null,
-    geometryHint: "box",
+    geometryHint: "thin_box",
+    boundingBox: { width: 5.5, height: 1.8, depth: 0.12 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ig-wall-brick",
@@ -98,7 +113,10 @@ export const PRODUCTS: Product[] = [
     layerType: "wall",
     layerOrder: 2,
     stlUrl: null,
-    geometryHint: "box",
+    geometryHint: "thin_box",
+    boundingBox: { width: 5.5, height: 1.8, depth: 0.12 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
 
   // ── Indian Garage – Accessories ──────────────────────────────
@@ -117,6 +135,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "box",
+    boundingBox: { width: 0.7, height: 0.5, depth: 0.5 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ig-acc-tyrerack",
@@ -133,6 +154,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "box",
+    boundingBox: { width: 0.7, height: 0.5, depth: 0.5 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ig-acc-compressor",
@@ -149,6 +173,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "cylinder",
+    boundingBox: { width: 0.6, height: 0.8, depth: 0.6 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ig-acc-oildrum",
@@ -165,6 +192,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "cylinder",
+    boundingBox: { width: 0.6, height: 0.8, depth: 0.6 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ig-acc-lift",
@@ -181,6 +211,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "box",
+    boundingBox: { width: 0.7, height: 0.5, depth: 0.5 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ig-acc-workbench",
@@ -197,6 +230,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "box",
+    boundingBox: { width: 0.7, height: 0.5, depth: 0.5 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
 
   // ── Indian Fuel Station – Bases ──────────────────────────────
@@ -214,7 +250,10 @@ export const PRODUCTS: Product[] = [
     layerType: "floor",
     layerOrder: 1,
     stlUrl: null,
-    geometryHint: "box",
+    geometryHint: "flat_plane",
+    boundingBox: { width: 5.8, height: 0.08, depth: 4.2 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ifs-base-highway",
@@ -230,7 +269,10 @@ export const PRODUCTS: Product[] = [
     layerType: "floor",
     layerOrder: 1,
     stlUrl: null,
-    geometryHint: "box",
+    geometryHint: "flat_plane",
+    boundingBox: { width: 6.4, height: 0.08, depth: 4.5 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
 
   // ── Indian Fuel Station – Structures ─────────────────────────
@@ -248,7 +290,10 @@ export const PRODUCTS: Product[] = [
     layerType: "wall",
     layerOrder: 2,
     stlUrl: null,
-    geometryHint: "box",
+    geometryHint: "thin_box",
+    boundingBox: { width: 3.5, height: 1.2, depth: 2.0 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ifs-struct-highway-canopy",
@@ -264,7 +309,10 @@ export const PRODUCTS: Product[] = [
     layerType: "wall",
     layerOrder: 2,
     stlUrl: null,
-    geometryHint: "box",
+    geometryHint: "thin_box",
+    boundingBox: { width: 5.0, height: 1.4, depth: 2.5 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
 
   // ── Indian Fuel Station – Accessories ────────────────────────
@@ -283,6 +331,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "cone",
+    boundingBox: { width: 0.6, height: 0.9, depth: 0.6 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ifs-acc-signboard",
@@ -299,6 +350,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "sphere",
+    boundingBox: { width: 0.7, height: 0.7, depth: 0.7 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ifs-acc-airstation",
@@ -315,6 +369,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "cylinder",
+    boundingBox: { width: 0.6, height: 0.8, depth: 0.6 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ifs-acc-barriers",
@@ -331,6 +388,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "cylinder",
+    boundingBox: { width: 0.6, height: 0.8, depth: 0.6 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
   {
     id: "ifs-acc-utilitycab",
@@ -347,6 +407,9 @@ export const PRODUCTS: Product[] = [
     layerOrder: 3,
     stlUrl: null,
     geometryHint: "box",
+    boundingBox: { width: 0.7, height: 0.5, depth: 0.5 },
+    collisionType: "solid",
+    assemblyCompatible: true,
   },
 ];
 
@@ -371,3 +434,4 @@ export function formatPrice(paise: number): string {
 }
 
 type Environment = "indian_garage" | "indian_fuel_station";
+

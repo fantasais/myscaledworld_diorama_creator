@@ -34,7 +34,7 @@ export function BuilderPage() {
       <div className="flex flex-1 min-h-0">
         {/* Left panel — Parts list (~30%) */}
         <div
-          className="w-72 xl:w-80 shrink-0 border-r border-border bg-card/30 overflow-y-auto"
+          className="w-72 xl:w-80 shrink-0 border-r border-border bg-[oklch(var(--panel-bg))] overflow-y-auto"
           data-ocid="builder.parts_panel"
         >
           <PartsList onReset={reset} />

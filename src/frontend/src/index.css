@@ -71,6 +71,8 @@
     --canvas-bg: 0.12 0.01 265;
     --panel-border: 0.25 0.012 265;
     --control-focus: 0.68 0.22 50;
+
+    --panel-bg: 0.21 0.016 265;
   }
 
   .dark {
@@ -117,6 +119,8 @@
     --canvas-bg: 0.12 0.01 265;
     --panel-border: 0.25 0.012 265;
     --control-focus: 0.68 0.22 50;
+
+    --panel-bg: 0.21 0.016 265;
   }
 
   * {
@@ -130,6 +134,10 @@
 @layer utilities {
   .transition-smooth {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-snappy {
+    transition: all 0.15s ease;
   }
 
   .canvas-container {
@@ -202,4 +210,30 @@
 
 html {
   color-scheme: dark;
+}
+
+button:focus-visible {
+  outline: 2px solid oklch(var(--ring));
+  outline-offset: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid oklch(var(--ring));
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+input:focus-visible {
+  outline: 2px solid oklch(var(--ring));
+  outline-offset: 1px;
+}
+
+select:focus-visible {
+  outline: 2px solid oklch(var(--ring));
+  outline-offset: 1px;
+}
+
+textarea:focus-visible {
+  outline: 2px solid oklch(var(--ring));
+  outline-offset: 1px;
 }

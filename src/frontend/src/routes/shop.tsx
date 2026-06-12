@@ -1,20 +1,38 @@
 import { ProductCard } from "@/components/ProductCard";
 import { ProductDetailModal } from "@/components/ProductDetailModal";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { PRODUCTS } from "@/data/products";
 import type { Product } from "@/types";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const CATEGORIES: { value: string; label: string }[] = [
-  { value: "all", label: "All Modules" },
+  { value: "all", label: "All" },
   { value: "base", label: "Bases" },
   { value: "wall", label: "Walls" },
-  { value: "structure", label: "Structures" },
   { value: "accessory", label: "Accessories" },
+  { value: "decal", label: "Decals" },
+  { value: "fuel_station_modules", label: "Fuel Station Modules" },
+  { value: "garage_modules", label: "Garage Modules" },
 ];
+
+/** Map a category chip value to a product filter predicate */
+function matchesChip(product: Product, chip: string): boolean {
+  if (chip === "all") return true;
+  if (chip === "garage_modules")
+    return product.environments.includes("indian_garage");
+  if (chip === "fuel_station_modules")
+    return product.environments.includes("indian_fuel_station");
+  return product.category === chip;
+}
+
+/** Read ?category= from current URL without requiring router validateSearch */
+function getCategoryFromUrl(): string {
+  if (typeof window === "undefined") return "all";
+  const cat = new URLSearchParams(window.location.search).get("category");
+  return CATEGORIES.some((c) => c.value === cat) ? (cat as string) : "all";
+}
 
 const ENV_FILTERS: { value: string; label: string }[] = [
   { value: "all", label: "All Environments" },
@@ -23,23 +41,54 @@ const ENV_FILTERS: { value: string; label: string }[] = [
 ];
 
 export function ShopPage() {
-  const [activeCategory, setActiveCategory] = useState("all");
+  const _navigate = useNavigate();
+  const [activeCategory, setActiveCategory] =
+    useState<string>(getCategoryFromUrl);
   const [activeEnv, setActiveEnv] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const filtered = PRODUCTS.filter((p) => {
-    const matchCat = activeCategory === "all" || p.category === activeCategory;
-    const matchEnv =
-      activeEnv === "all" ||
-      p.environments.includes(activeEnv as Product["environments"][number]);
-    const matchSearch =
-      search.trim() === "" ||
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchEnv && matchSearch;
-  });
+  // Sync active category to URL search param
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (activeCategory === "all") {
+      url.searchParams.delete("category");
+    } else {
+      url.searchParams.set("category", activeCategory);
+    }
+    window.history.replaceState(null, "", url.toString());
+  }, [activeCategory]);
+
+  // Keep state in sync on browser back/forward
+  useEffect(() => {
+    const handler = () => setActiveCategory(getCategoryFromUrl());
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, []);
+
+  function handleCategoryClick(value: string) {
+    // clicking the active non-all chip resets to "all"
+    setActiveCategory((prev) =>
+      prev === value && value !== "all" ? "all" : value,
+    );
+  }
+
+  const filtered = useMemo(
+    () =>
+      PRODUCTS.filter((p) => {
+        const matchCat = matchesChip(p, activeCategory);
+        const matchEnv =
+          activeEnv === "all" ||
+          p.environments.includes(activeEnv as Product["environments"][number]);
+        const matchSearch =
+          search.trim() === "" ||
+          p.name.toLowerCase().includes(search.toLowerCase()) ||
+          p.description.toLowerCase().includes(search.toLowerCase());
+        return matchCat && matchEnv && matchSearch;
+      }),
+    [activeCategory, activeEnv, search],
+  );
 
   const handleDetails = (product: Product) => {
     setSelectedProduct(product);
@@ -67,9 +116,9 @@ export function ShopPage() {
       {/* Filters + grid */}
       <div className="bg-background">
         <div className="container mx-auto px-4 py-8">
-          {/* Filter bar */}
+          {/* Search + env filter bar */}
           <div
-            className="flex flex-col sm:flex-row gap-3 mb-8"
+            className="flex flex-col sm:flex-row gap-3 mb-6"
             data-ocid="shop.filter_bar"
           >
             <div className="relative flex-1 max-w-xs">
@@ -89,10 +138,10 @@ export function ShopPage() {
                   type="button"
                   onClick={() => setActiveEnv(f.value)}
                   data-ocid={`shop.env_filter.${f.value}`}
-                  className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium border transition-colors duration-200 ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium border transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
                     activeEnv === f.value
                       ? "bg-primary/15 text-primary border-primary/40"
-                      : "bg-card text-muted-foreground border-border hover:border-primary/30 hover:text-foreground"
+                      : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
                   }`}
                 >
                   {f.label}
@@ -101,26 +150,33 @@ export function ShopPage() {
             </div>
           </div>
 
-          {/* Category tabs */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.value}
-                type="button"
-                onClick={() => setActiveCategory(cat.value)}
-                data-ocid={`shop.category_tab.${cat.value}`}
-                className={`px-4 py-1.5 rounded-full text-xs font-mono font-medium border transition-colors duration-200 ${
-                  activeCategory === cat.value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card text-muted-foreground border-border hover:border-primary/30 hover:text-foreground"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Results count */}
+          {/* Category chip row */}
+          <fieldset
+            className="flex flex-wrap gap-2 mb-8 border-0 p-0 m-0"
+            data-ocid="shop.category_chips"
+          >
+            <legend className="sr-only">Filter by category</legend>
+            {CATEGORIES.map((cat) => {
+              const isActive = activeCategory === cat.value;
+              return (
+                <button
+                  key={cat.value}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => handleCategoryClick(cat.value)}
+                  data-ocid={`shop.category_chip.${cat.value}`}
+                  className={[
+                    "px-4 py-1.5 rounded-full text-xs font-mono font-medium border transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                    isActive
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:bg-primary/5 hover:text-foreground",
+                  ].join(" ")}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </fieldset>
           <div className="flex items-center justify-between mb-6">
             <span className="font-mono text-xs text-muted-foreground">
               {filtered.length} module{filtered.length !== 1 ? "s" : ""} found

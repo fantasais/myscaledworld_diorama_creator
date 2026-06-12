@@ -1,10 +1,15 @@
 import { useBuilderStore } from "@/store/builderStore";
 import type { GeometryHint, ItemTransform, Product } from "@/types";
-import { OrbitControls, Text } from "@react-three/drei";
+import { ContactShadows, Grid, OrbitControls, Text } from "@react-three/drei";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
+import { RotateCcw } from "lucide-react";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import type React from "react";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
+
+// ── Orbit controls ref type extracted from the drei component ──
+type OrbitControlsRef = React.ElementRef<typeof OrbitControls>;
 
 // ── Category colour map ───────────────────────────────────
 const CATEGORY_COLOR: Record<string, string> = {
@@ -215,32 +220,58 @@ function ItemInstance({
   );
 }
 
-// ── Scene camera void (floor plane) ────────────────────────
+// ── Scene floor, grid and shadows ──────────────────────────
 function FloorGrid() {
   return (
     <>
+      {/* Receiver plane for shadows */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
         position={[0, -0.3, 0]}
       >
-        <planeGeometry args={[20, 20]} />
+        <planeGeometry args={[30, 30]} />
         <meshStandardMaterial
-          color="var(--canvas-bg)"
-          roughness={0.9}
-          metalness={0.1}
+          color="#0d0d1a"
+          roughness={0.95}
+          metalness={0.05}
         />
       </mesh>
-      <gridHelper
-        args={[20, 20, "#2a2a4a", "#16162a"]}
-        position={[0, -0.29, 0]}
+      {/* Subtle grid overlay */}
+      <Grid
+        position={[0, -0.295, 0]}
+        args={[30, 30]}
+        cellSize={1}
+        cellThickness={0.4}
+        cellColor="#2a2a4a"
+        sectionSize={5}
+        sectionThickness={0.8}
+        sectionColor="#3a3a5a"
+        fadeDistance={18}
+        fadeStrength={1.5}
+        infiniteGrid={false}
+        followCamera={false}
+      />
+      {/* Soft contact shadows beneath all objects */}
+      <ContactShadows
+        position={[0, -0.28, 0]}
+        opacity={0.55}
+        scale={20}
+        blur={2.5}
+        far={4}
+        resolution={256}
+        color="#000000"
       />
     </>
   );
 }
 
 // ── Scene content ───────────────────────────────────────
-function SceneContent() {
+interface SceneContentProps {
+  orbitRef: React.RefObject<OrbitControlsRef | null>;
+}
+
+function SceneContent({ orbitRef }: SceneContentProps) {
   const { environment, selectedBase, selectedWall, accessories } =
     useBuilderStore();
   const updateTransform = useBuilderStore((s) => s.updateTransform);
@@ -320,7 +351,12 @@ function SceneContent() {
           }}
         />
       ))}
-      <OrbitControls makeDefault enableDamping dampingFactor={0.08} />
+      <OrbitControls
+        ref={orbitRef}
+        makeDefault
+        enableDamping
+        dampingFactor={0.08}
+      />
     </>
   );
 }
@@ -328,11 +364,18 @@ function SceneContent() {
 // ── Public component ─────────────────────────────────────
 export function ThreeScene() {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const orbitRef = useRef<OrbitControlsRef | null>(null);
+
+  function handleResetCamera() {
+    if (orbitRef.current) {
+      orbitRef.current.reset();
+    }
+  }
 
   return (
     <div
       ref={canvasRef}
-      className="w-full h-full rounded-xl overflow-hidden bg-[var(--canvas-bg)]"
+      className="w-full h-full rounded-xl overflow-hidden bg-[var(--canvas-bg)] relative"
       data-ocid="builder.three_canvas"
     >
       <Canvas
@@ -341,8 +384,20 @@ export function ThreeScene() {
         gl={{ antialias: true, alpha: false }}
         style={{ background: "oklch(var(--canvas-bg))" }}
       >
-        <SceneContent />
+        <SceneContent orbitRef={orbitRef} />
       </Canvas>
+
+      {/* Reset Camera button */}
+      <button
+        type="button"
+        onClick={handleResetCamera}
+        className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-card/80 border border-border/60 backdrop-blur-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors text-xs font-mono"
+        data-ocid="builder.reset_camera_button"
+        title="Reset camera to default view"
+      >
+        <RotateCcw className="w-3.5 h-3.5" />
+        Reset Camera
+      </button>
 
       {/* Keyboard hint overlay */}
       <div className="absolute bottom-3 left-3 pointer-events-none">

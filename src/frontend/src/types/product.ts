@@ -1,4 +1,4 @@
-export type Scale = "1:64" | "1:18" | "1:12";
+export type Scale = "1:64" | "1:43" | "1:18" | "1:12";
 
 export type Environment = "indian_garage" | "indian_fuel_station";
 
@@ -18,7 +18,6 @@ export type BomType =
   | "decal_sheet"
   | "complete_kit";
 
-/** Geometry hint for procedural placeholder in the 3D scene */
 export type GeometryHint =
   | "box"
   | "cylinder"
@@ -27,18 +26,54 @@ export type GeometryHint =
   | "flat_plane"
   | "thin_box";
 
+export interface Vector3Tuple {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface BoundingBox3D {
+  width: number;
+  height: number;
+  depth: number;
+}
+
+export interface SnapPoint {
+  id: string;
+  label: string;
+  position: Vector3Tuple;
+  rotation?: Vector3Tuple;
+  accepts?: Category[];
+}
+
+export type CollisionType = "none" | "soft" | "solid";
+
 export interface Product {
   id: string;
   name: string;
+  sku?: string;
   scale: Scale;
   category: Category;
+  subCategory?: string;
   environments: Environment[];
-  price: number; // in paise (INR * 100)
+  price: number;
   thumbnailPlaceholder: string;
   description: string;
   bomType: BomType;
-  stlUrl: string | null; // null = use placeholder geometry
-  geometryHint?: GeometryHint; // guides procedural placeholder shape
+  stlUrl: string | null;
+  geometryHint?: GeometryHint;
+  defaultPosition?: Vector3Tuple;
+  defaultRotation?: Vector3Tuple;
+  boundingBox?: BoundingBox3D;
+  snapPoints?: SnapPoint[];
+  collisionType?: CollisionType;
+  assemblyCompatible?: boolean;
+  tags?: string[];
+  vendor?: string;
+  material?: string;
+  printTimeMinutes?: number;
+  supportRequired?: boolean;
   layerType?: "base" | "floor" | "wall" | "accent" | "accessory";
   layerOrder?: number;
 }
+

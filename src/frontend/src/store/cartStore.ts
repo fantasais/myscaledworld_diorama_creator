@@ -1,4 +1,4 @@
-import type { BomLine, CartItem, CartState, Environment, Scale } from "@/types";
+import type { BomLine, CartItem, CartState, Environment, Scale, SceneObject } from "@/types";
 import { create } from "zustand";
 
 let _counter = 0;
@@ -39,14 +39,23 @@ export const useCartStore = create<CartState>((set, get) => ({
     });
   },
 
-  addConfiguredKit(bom: BomLine[], environment: Environment, scale: Scale) {
+  addConfiguredKit(
+    bom: BomLine[],
+    environment: Environment,
+    scale: Scale,
+    kitName?: string,
+    sceneObjects: SceneObject[] = [],
+    projectId: string | null = null,
+  ) {
     const total = bom.reduce((sum, l) => sum + l.totalPrice, 0);
     const envLabel =
       environment === "indian_garage" ? "Indian Garage" : "Indian Fuel Station";
     const item: CartItem = {
       id: uid(),
       type: "configured_kit",
-      kitName: `${envLabel} Diorama Kit`,
+      kitName: kitName ?? `${envLabel} Diorama Kit`,
+      projectId,
+      sceneObjects,
       environment,
       scale,
       bom,
@@ -80,3 +89,4 @@ export const useCartStore = create<CartState>((set, get) => ({
     return get().items.reduce((sum, i) => sum + i.totalPrice, 0);
   },
 }));
+

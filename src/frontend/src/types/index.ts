@@ -1,4 +1,4 @@
-export type Scale = "1:64" | "1:18" | "1:12";
+export type Scale = "1:64" | "1:43" | "1:18" | "1:12";
 
 export type Environment = "indian_garage" | "indian_fuel_station";
 
@@ -18,22 +18,69 @@ export type BomType =
   | "decal_sheet"
   | "complete_kit";
 
-export type GeometryHint = "box" | "cylinder" | "cone" | "sphere";
+/** Geometry hint for procedural placeholder in the 3D scene. */
+export type GeometryHint =
+  | "box"
+  | "cylinder"
+  | "cone"
+  | "sphere"
+  | "flat_plane"
+  | "thin_box";
+
+export interface Vector3Tuple {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface BoundingBox3D {
+  width: number;
+  height: number;
+  depth: number;
+}
+
+export interface SnapPoint {
+  id: string;
+  label: string;
+  position: Vector3Tuple;
+  rotation?: Vector3Tuple;
+  accepts?: Category[];
+}
+
+export type CollisionType = "none" | "soft" | "solid";
 
 export interface Product {
   id: string;
   name: string;
+  sku?: string;
   scale: Scale;
   category: Category;
+  subCategory?: string;
   environments: Environment[];
   price: number; // in paise (INR * 100)
   thumbnailPlaceholder: string;
   description: string;
   bomType: BomType;
-  layerType?: "base" | "floor" | "wall" | "accent" | "accessory";
-  layerOrder?: number;
+
+  /** STL model path or uploaded object URL. null = procedural placeholder. */
   stlUrl: string | null;
   geometryHint?: GeometryHint;
+
+  /** Scene metadata. Store this now so snapping/collision can come later without data surgery. */
+  defaultPosition?: Vector3Tuple;
+  defaultRotation?: Vector3Tuple;
+  boundingBox?: BoundingBox3D;
+  snapPoints?: SnapPoint[];
+  collisionType?: CollisionType;
+  assemblyCompatible?: boolean;
+  tags?: string[];
+  vendor?: string;
+  material?: string;
+  printTimeMinutes?: number;
+  supportRequired?: boolean;
+
+  layerType?: "base" | "floor" | "wall" | "accent" | "accessory";
+  layerOrder?: number;
 }
 
 // ── 3D Transform ──────────────────────────────────────────────
@@ -44,7 +91,20 @@ export interface ItemTransform {
   rotY: number;
 }
 
-// ── Builder Store (replaces old ConfiguratorState) ────────────
+export type SceneObjectKind = "base" | "wall" | "structure" | "accessory";
+
+export interface SceneObject {
+  id: string; // stable instance id: productId:index for accessories; productId:base/wall for fixed modules
+  kind: SceneObjectKind;
+  productId: string;
+  product: Product;
+  instanceIndex: number;
+  quantity: number;
+  transform: ItemTransform;
+  locked?: boolean;
+}
+
+// ── Builder Store ─────────────────────────────────────────────
 export interface SelectedItem {
   product: Product;
   quantity: number;
@@ -52,11 +112,28 @@ export interface SelectedItem {
   transforms: Record<string, ItemTransform>;
 }
 
+export interface SavedProject {
+  id: string;
+  name: string;
+  scale: Scale;
+  environment: Environment | null;
+  selectedBase: Product | null;
+  selectedWall: Product | null;
+  accessories: Record<string, SelectedItem>;
+  sceneObjects: SceneObject[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface BuilderStore {
+  scale: Scale;
   environment: Environment | null;
   selectedBase: Product | null;
   selectedWall: Product | null;
   accessories: Record<string, SelectedItem>; // keyed by product.id
+  savedProjects: SavedProject[];
+  activeProjectId: string | null;
+  setScale: (scale: Scale) => void;
   setEnvironment: (env: Environment) => void;
   setBase: (product: Product | null) => void;
   setWall: (product: Product | null) => void;
@@ -66,6 +143,10 @@ export interface BuilderStore {
     instanceIndex: number,
     t: Partial<ItemTransform>,
   ) => void;
+  getSceneObjects: () => SceneObject[];
+  saveProject: (name: string) => SavedProject;
+  loadProject: (projectId: string) => void;
+  deleteProject: (projectId: string) => void;
   reset: () => void;
 }
 
@@ -102,14 +183,14 @@ export interface BomLine {
 }
 
 export interface CartItem {
-  id: string; // deterministic uuid for the cart entry
+  id: string;
   type: CartItemType;
-  // for configured_kit
   kitName?: string;
+  projectId?: string | null;
+  sceneObjects?: SceneObject[];
   environment?: Environment;
   scale?: Scale;
   bom?: BomLine[];
-  // for individual product
   product?: Product;
   quantity: number;
   unitPrice: number;
@@ -123,6 +204,9 @@ export interface CartState {
     items: BomLine[],
     environment: Environment,
     scale: Scale,
+    kitName?: string,
+    sceneObjects?: SceneObject[],
+    projectId?: string | null,
   ) => void;
   updateQuantity: (id: string, qty: number) => void;
   removeItem: (id: string) => void;
@@ -155,3 +239,4 @@ export interface Order {
   status: "pending" | "confirmed";
   createdAt: string;
 }
+

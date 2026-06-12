@@ -1,62 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ProjectPanel } from "@/components/ProjectPanel";
 import { PRODUCTS, getProductsByCategory } from "@/data/products";
 import { useBuilderStore } from "@/store/builderStore";
-import type { Environment, Product } from "@/types";
-import {
-  ArrowUp,
-  Box,
-  ChevronDown,
-  Cylinder,
-  Layers,
-  Minus,
-  Package,
-  Plus,
-  Search,
-  Square,
-  Tag,
-  Zap,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import type { Environment, Product, Scale } from "@/types";
+import { ChevronDown, Minus, Plus } from "lucide-react";
 import { useState } from "react";
 
 const ENV_OPTIONS: { value: Environment; label: string; icon: string }[] = [
   { value: "indian_garage", label: "Indian Garage", icon: "🔧" },
   { value: "indian_fuel_station", label: "Indian Fuel Station", icon: "⛽" },
 ];
-
-// ── Product-type icon mapper ─────────────────────────────
-function getProductIcon(product: Product): LucideIcon {
-  const name = product.name.toLowerCase();
-  const cat = product.category.toLowerCase();
-  if (cat === "base" || name.includes("floor") || name.includes("base"))
-    return Layers;
-  if (
-    cat === "wall" ||
-    cat === "structure" ||
-    name.includes("wall") ||
-    name.includes("canopy")
-  )
-    return Square;
-  if (
-    name.includes("pump") ||
-    name.includes("air station") ||
-    name.includes("compressor")
-  )
-    return Zap;
-  if (name.includes("drum") || name.includes("barrel") || name.includes("oil"))
-    return Cylinder;
-  if (
-    name.includes("cabinet") ||
-    name.includes("rack") ||
-    name.includes("workbench") ||
-    name.includes("bench")
-  )
-    return Package;
-  if (name.includes("lift") || name.includes("jack")) return ArrowUp;
-  if (name.includes("signboard") || name.includes("decal")) return Tag;
-  return Box;
-}
 
 function SectionHeader({
   label,
@@ -92,10 +45,8 @@ function ProductRow({
   qty,
   onQtyChange,
 }: { product: Product; qty: number; onQtyChange: (v: number) => void }) {
-  const Icon = getProductIcon(product);
   return (
     <div className="flex items-center gap-2 py-2 px-1 border-b border-border/30 last:border-0">
-      <Icon className="w-4 h-4 text-muted-foreground/60 shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold text-foreground truncate">
           {product.name}
@@ -109,7 +60,7 @@ function ProductRow({
           type="button"
           variant="outline"
           size="icon"
-          className="w-6 h-6 rounded border-border/60 hover:border-primary/50 hover:bg-primary/10 hover:text-primary focus-visible:ring-1 focus-visible:ring-ring transition-colors duration-150"
+          className="w-6 h-6 rounded border-border/60"
           onClick={() => onQtyChange(Math.max(0, qty - 1))}
           disabled={qty === 0}
           aria-label="Decrease quantity"
@@ -134,7 +85,7 @@ function ProductRow({
           type="button"
           variant="outline"
           size="icon"
-          className="w-6 h-6 rounded border-border/60 hover:border-primary/50 hover:bg-primary/10 hover:text-primary focus-visible:ring-1 focus-visible:ring-ring transition-colors duration-150"
+          className="w-6 h-6 rounded border-border/60"
           onClick={() => onQtyChange(Math.min(99, qty + 1))}
           aria-label="Increase quantity"
           data-ocid={`parts.plus.${product.id}`}
@@ -151,7 +102,6 @@ function RadioRow({
   selected,
   onSelect,
 }: { product: Product; selected: boolean; onSelect: () => void }) {
-  const Icon = getProductIcon(product);
   return (
     <button
       type="button"
@@ -168,7 +118,6 @@ function RadioRow({
           selected ? "border-primary bg-primary" : "border-muted-foreground/40"
         }`}
       />
-      <Icon className="w-4 h-4 text-muted-foreground/50 shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold truncate">{product.name}</p>
       </div>
@@ -183,10 +132,12 @@ interface PartsListProps {
 
 export function PartsList({ onReset }: PartsListProps) {
   const {
+    scale,
     environment,
     selectedBase,
     selectedWall,
     accessories,
+    setScale,
     setEnvironment,
     setBase,
     setWall,
@@ -197,30 +148,19 @@ export function PartsList({ onReset }: PartsListProps) {
     wall: true,
     accessory: true,
   });
-  const [search, setSearch] = useState("");
 
   const toggle = (key: string) =>
     setOpenSections((s) => ({ ...s, [key]: !s[key] }));
 
-  const matchesSearch = (p: Product) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return (
-      p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
-    );
-  };
-
-  const bases = environment
-    ? getProductsByCategory(environment, "base").filter(matchesSearch)
-    : [];
+  const bases = environment ? getProductsByCategory(environment, "base") : [];
   const wallCat = environment === "indian_fuel_station" ? "structure" : "wall";
   const walls = environment
     ? PRODUCTS.filter(
         (p) => p.environments.includes(environment) && p.category === wallCat,
-      ).filter(matchesSearch)
+      )
     : [];
   const accProducts = environment
-    ? getProductsByCategory(environment, "accessory").filter(matchesSearch)
+    ? getProductsByCategory(environment, "accessory")
     : [];
 
   const accCount = Object.values(accessories).reduce(
@@ -234,33 +174,37 @@ export function PartsList({ onReset }: PartsListProps) {
       data-ocid="parts.panel"
     >
       {/* Header */}
-      <div className="px-4 pt-3 pb-2 border-b border-border/50 shrink-0 flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-xs uppercase tracking-widest text-primary">
-            Parts List
-          </span>
-          <button
-            type="button"
-            onClick={onReset}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            data-ocid="parts.reset_button"
-          >
-            Reset
-          </button>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60 pointer-events-none" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search parts…"
-            className="h-7 pl-8 text-xs bg-background/60 border-border/50 placeholder:text-muted-foreground/50"
-            data-ocid="parts.search_input"
-          />
-        </div>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
+        <span className="font-mono text-xs uppercase tracking-widest text-primary">
+          Parts List
+        </span>
+        <button
+          type="button"
+          onClick={onReset}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          data-ocid="parts.reset_button"
+        >
+          Reset
+        </button>
       </div>
 
       <div className="flex flex-col gap-4 p-4">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-2">
+            Scale
+          </p>
+          <select
+            value={scale}
+            onChange={(e) => setScale(e.target.value as Scale)}
+            className="w-full h-9 rounded-lg border border-border/50 bg-background px-3 text-sm text-foreground"
+            data-ocid="parts.scale_select"
+          >
+            <option value="1:64">1:64</option>
+            <option value="1:43">1:43 · future</option>
+            <option value="1:18">1:18 · future</option>
+            <option value="1:12">1:12 · future</option>
+          </select>
+        </div>
         {/* Environment */}
         <div>
           <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-2">
@@ -362,6 +306,9 @@ export function PartsList({ onReset }: PartsListProps) {
           </>
         )}
       </div>
+
+      <ProjectPanel />
     </div>
   );
 }
+

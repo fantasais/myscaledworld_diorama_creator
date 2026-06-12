@@ -2,7 +2,7 @@ import { useBuilderStore } from "@/store/builderStore";
 import type { GeometryHint, ItemTransform, Product } from "@/types";
 import { OrbitControls, Text } from "@react-three/drei";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 
@@ -258,9 +258,19 @@ function FloorGrid() {
 // ── Scene content ───────────────────────────────────────
 function SceneContent() {
   const environment = useBuilderStore((s) => s.environment);
-  const sceneObjects = useBuilderStore((s) => s.getSceneObjects());
+  const selectedBase = useBuilderStore((s) => s.selectedBase);
+  const selectedWall = useBuilderStore((s) => s.selectedWall);
+  const accessories = useBuilderStore((s) => s.accessories);
+  const getSceneObjects = useBuilderStore((s) => s.getSceneObjects);
   const updateTransform = useBuilderStore((s) => s.updateTransform);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
+  // Important: do not call getSceneObjects() directly inside the Zustand selector.
+  // It returns a fresh array each time and can trigger React error #185 in production.
+  const sceneObjects = useMemo(
+    () => getSceneObjects(),
+    [getSceneObjects, selectedBase, selectedWall, accessories],
+  );
 
   return (
     <>

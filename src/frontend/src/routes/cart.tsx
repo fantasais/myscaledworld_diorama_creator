@@ -41,7 +41,8 @@ function KitBomExpand({ item }: { item: CartItem }) {
           <ChevronDown className="w-3 h-3" />
         )}
         {open ? "Hide" : "View"} bill of materials ({item.bom.length} module
-        {item.bom.length !== 1 ? "s" : ""})
+        {item.bom.length !== 1 ? "s" : ""}
+        {item.sceneObjects?.length ? ` · ${item.sceneObjects.length} scene objects` : ""})
       </button>
       {open && (
         <div className="mt-3 flex flex-col gap-1.5" data-ocid="cart.bom_list">
@@ -117,6 +118,14 @@ function CartItemRow({ item, index }: { item: CartItem; index: number }) {
                     {item.scale}
                   </span>
                 )}
+                {isKit && item.projectId && (
+                  <Badge
+                    variant="outline"
+                    className="font-mono text-xs border-border text-muted-foreground px-2 py-0"
+                  >
+                    Saved Project
+                  </Badge>
+                )}
                 {isKit && (
                   <Badge
                     variant="secondary"
@@ -140,7 +149,7 @@ function CartItemRow({ item, index }: { item: CartItem; index: number }) {
                   type="button"
                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
                   disabled={item.quantity <= 1}
-                  className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 disabled:opacity-30 transition-colors duration-150 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors duration-200"
                   data-ocid={`cart.qty_decrease.${index + 1}`}
                 >
                   <Minus className="w-3.5 h-3.5" />
@@ -154,7 +163,7 @@ function CartItemRow({ item, index }: { item: CartItem; index: number }) {
                 <button
                   type="button"
                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                  className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors duration-150 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors duration-200"
                   data-ocid={`cart.qty_increase.${index + 1}`}
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -169,7 +178,7 @@ function CartItemRow({ item, index }: { item: CartItem; index: number }) {
             <button
               type="button"
               onClick={() => removeItem(item.id)}
-              className="ml-auto flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors duration-150 rounded px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="ml-auto flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-destructive transition-colors duration-200"
               data-ocid={`cart.remove_button.${index + 1}`}
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -322,7 +331,7 @@ export function CartPage() {
                     <Link to="/shop">
                       <button
                         type="button"
-                        className="font-mono text-xs text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded transition-colors duration-150"
+                        className="font-mono text-xs text-muted-foreground hover:text-primary transition-colors duration-200"
                         data-ocid="cart.continue_shopping_link"
                       >
                         Continue shopping
@@ -338,3 +347,4 @@ export function CartPage() {
     </>
   );
 }
+

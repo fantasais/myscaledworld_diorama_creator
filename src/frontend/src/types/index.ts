@@ -88,7 +88,9 @@ export interface ItemTransform {
   posX: number;
   posY: number;
   posZ: number;
+  rotX: number;
   rotY: number;
+  rotZ: number;
 }
 
 export type SceneObjectKind = "base" | "wall" | "structure" | "accessory";
@@ -143,6 +145,7 @@ export interface BuilderStore {
     instanceIndex: number,
     t: Partial<ItemTransform>,
   ) => void;
+  removeAccessoryInstance: (productId: string, instanceIndex: number) => void;
   getSceneObjects: () => SceneObject[];
   saveProject: (name: string) => SavedProject;
   loadProject: (projectId: string) => void;

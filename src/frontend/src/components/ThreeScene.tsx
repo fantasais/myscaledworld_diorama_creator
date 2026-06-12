@@ -1,15 +1,10 @@
 import { useBuilderStore } from "@/store/builderStore";
 import type { GeometryHint, ItemTransform, Product } from "@/types";
-import { ContactShadows, Grid, OrbitControls, Text } from "@react-three/drei";
+import { OrbitControls, Text } from "@react-three/drei";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
-import { RotateCcw } from "lucide-react";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import type React from "react";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
-
-// ── Orbit controls ref type extracted from the drei component ──
-type OrbitControlsRef = React.ElementRef<typeof OrbitControls>;
 
 // ── Category colour map ───────────────────────────────────
 const CATEGORY_COLOR: Record<string, string> = {
@@ -17,13 +12,24 @@ const CATEGORY_COLOR: Record<string, string> = {
   wall: "#5a7a6b",
   structure: "#5a7a6b",
   accessory: "#c07d3a",
+  decal: "#a88f4a",
+  kit: "#8c6fc0",
 };
 
 // ── Procedural placeholder geometry per hint ─────────────────
 function PlaceholderMesh({
   hint,
   color,
-}: { hint: GeometryHint; color: string }) {
+  product,
+}: { hint: GeometryHint; color: string; product?: Product }) {
+  const box = product?.boundingBox;
+  const boxArgs: [number, number, number] = box
+    ? [box.width, box.height, box.depth]
+    : hint === "thin_box"
+      ? [1.2, 0.12, 0.8]
+      : hint === "flat_plane"
+        ? [4, 0.04, 4]
+        : [0.7, 0.5, 0.5];
   if (hint === "cylinder") {
     return (
       <mesh castShadow>
@@ -51,7 +57,7 @@ function PlaceholderMesh({
   // default box
   return (
     <mesh castShadow>
-      <boxGeometry args={[0.7, 0.5, 0.5]} />
+      <boxGeometry args={boxArgs} />
       <meshStandardMaterial color={color} roughness={0.5} metalness={0.2} />
     </mesh>
   );
@@ -195,13 +201,18 @@ function ItemInstance({
             <PlaceholderMesh
               hint={product.geometryHint ?? "box"}
               color={color}
+              product={product}
             />
           }
         >
           <StlMesh url={product.stlUrl} color={color} />
         </Suspense>
       ) : (
-        <PlaceholderMesh hint={product.geometryHint ?? "box"} color={color} />
+        <PlaceholderMesh
+          hint={product.geometryHint ?? "box"}
+          color={color}
+          product={product}
+        />
       )}
 
       {/* Label above */}
@@ -220,99 +231,36 @@ function ItemInstance({
   );
 }
 
-// ── Scene floor, grid and shadows ──────────────────────────
+// ── Scene camera void (floor plane) ────────────────────────
 function FloorGrid() {
   return (
     <>
-      {/* Receiver plane for shadows */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
         position={[0, -0.3, 0]}
       >
-        <planeGeometry args={[30, 30]} />
+        <planeGeometry args={[20, 20]} />
         <meshStandardMaterial
-          color="#0d0d1a"
-          roughness={0.95}
-          metalness={0.05}
+          color="var(--canvas-bg)"
+          roughness={0.9}
+          metalness={0.1}
         />
       </mesh>
-      {/* Subtle grid overlay */}
-      <Grid
-        position={[0, -0.295, 0]}
-        args={[30, 30]}
-        cellSize={1}
-        cellThickness={0.4}
-        cellColor="#2a2a4a"
-        sectionSize={5}
-        sectionThickness={0.8}
-        sectionColor="#3a3a5a"
-        fadeDistance={18}
-        fadeStrength={1.5}
-        infiniteGrid={false}
-        followCamera={false}
-      />
-      {/* Soft contact shadows beneath all objects */}
-      <ContactShadows
-        position={[0, -0.28, 0]}
-        opacity={0.55}
-        scale={20}
-        blur={2.5}
-        far={4}
-        resolution={256}
-        color="#000000"
+      <gridHelper
+        args={[20, 20, "#2a2a4a", "#16162a"]}
+        position={[0, -0.29, 0]}
       />
     </>
   );
 }
 
 // ── Scene content ───────────────────────────────────────
-interface SceneContentProps {
-  orbitRef: React.RefObject<OrbitControlsRef | null>;
-}
-
-function SceneContent({ orbitRef }: SceneContentProps) {
-  const { environment, selectedBase, selectedWall, accessories } =
-    useBuilderStore();
+function SceneContent() {
+  const environment = useBuilderStore((s) => s.environment);
+  const sceneObjects = useBuilderStore((s) => s.getSceneObjects());
   const updateTransform = useBuilderStore((s) => s.updateTransform);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-
-  // Flat list of all items to render
-  const items: {
-    product: Product;
-    instanceIndex: number;
-    transform: ItemTransform;
-    key: string;
-  }[] = [];
-
-  if (selectedBase) {
-    items.push({
-      product: selectedBase,
-      instanceIndex: 0,
-      transform: { posX: 0, posY: -0.26, posZ: 0, rotY: 0 },
-      key: `${selectedBase.id}:0`,
-    });
-  }
-  if (selectedWall) {
-    items.push({
-      product: selectedWall,
-      instanceIndex: 0,
-      transform: { posX: 0, posY: 0.3, posZ: -2.5, rotY: 0 },
-      key: `${selectedWall.id}:0`,
-    });
-  }
-  for (const item of Object.values(accessories)) {
-    for (let i = 0; i < item.quantity; i++) {
-      const key = `${item.product.id}:${i}`;
-      const transform = item.transforms[key] ?? {
-        posX: i * 1.5 - 1.5,
-        posY: 0,
-        posZ: i * 0.5,
-        rotY: 0,
-      };
-      items.push({ product: item.product, instanceIndex: i, transform, key });
-    }
-  }
 
   return (
     <>
@@ -335,28 +283,22 @@ function SceneContent({ orbitRef }: SceneContentProps) {
           Select environment to begin
         </Text>
       )}
-      {items.map(({ product, instanceIndex, transform, key }) => (
+      {sceneObjects.map((obj) => (
         <ItemInstance
-          key={key}
-          product={product}
-          instanceIndex={instanceIndex}
-          transform={transform}
-          selected={selectedKey === key}
-          onSelect={() => setSelectedKey(key)}
+          key={obj.id}
+          product={obj.product}
+          instanceIndex={obj.instanceIndex}
+          transform={obj.transform}
+          selected={selectedKey === obj.id}
+          onSelect={() => setSelectedKey(obj.id)}
           onTransformChange={(t) => {
-            // base and wall have fixed transforms
-            if (product.category === "accessory") {
-              updateTransform(product.id, instanceIndex, t);
+            if (!obj.locked && obj.kind === "accessory") {
+              updateTransform(obj.productId, obj.instanceIndex, t);
             }
           }}
         />
       ))}
-      <OrbitControls
-        ref={orbitRef}
-        makeDefault
-        enableDamping
-        dampingFactor={0.08}
-      />
+      <OrbitControls makeDefault enableDamping dampingFactor={0.08} />
     </>
   );
 }
@@ -364,18 +306,11 @@ function SceneContent({ orbitRef }: SceneContentProps) {
 // ── Public component ─────────────────────────────────────
 export function ThreeScene() {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const orbitRef = useRef<OrbitControlsRef | null>(null);
-
-  function handleResetCamera() {
-    if (orbitRef.current) {
-      orbitRef.current.reset();
-    }
-  }
 
   return (
     <div
       ref={canvasRef}
-      className="w-full h-full rounded-xl overflow-hidden bg-[var(--canvas-bg)] relative"
+      className="w-full h-full rounded-xl overflow-hidden bg-[var(--canvas-bg)]"
       data-ocid="builder.three_canvas"
     >
       <Canvas
@@ -384,20 +319,8 @@ export function ThreeScene() {
         gl={{ antialias: true, alpha: false }}
         style={{ background: "oklch(var(--canvas-bg))" }}
       >
-        <SceneContent orbitRef={orbitRef} />
+        <SceneContent />
       </Canvas>
-
-      {/* Reset Camera button */}
-      <button
-        type="button"
-        onClick={handleResetCamera}
-        className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-card/80 border border-border/60 backdrop-blur-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors text-xs font-mono"
-        data-ocid="builder.reset_camera_button"
-        title="Reset camera to default view"
-      >
-        <RotateCcw className="w-3.5 h-3.5" />
-        Reset Camera
-      </button>
 
       {/* Keyboard hint overlay */}
       <div className="absolute bottom-3 left-3 pointer-events-none">
@@ -408,3 +331,4 @@ export function ThreeScene() {
     </div>
   );
 }
+

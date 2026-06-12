@@ -11,7 +11,7 @@ import type {
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-const DEFAULT_TRANSFORM: ItemTransform = { posX: 0, posY: 0, posZ: 0, rotY: 0 };
+const DEFAULT_TRANSFORM: ItemTransform = { posX: 0, posY: 0, posZ: 0, rotX: 0, rotY: 0, rotZ: 0 };
 
 function uid(prefix = "project"): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -23,13 +23,15 @@ function defaultTransformFor(product: Product, instanceIndex = 0): ItemTransform
       posX: product.defaultPosition?.x ?? instanceIndex * 1.5,
       posY: product.defaultPosition?.y ?? 0,
       posZ: product.defaultPosition?.z ?? instanceIndex * 0.5,
+      rotX: product.defaultRotation?.x ?? 0,
       rotY: product.defaultRotation?.y ?? 0,
+      rotZ: product.defaultRotation?.z ?? 0,
     };
   }
 
-  if (product.category === "base") return { posX: 0, posY: -0.26, posZ: 0, rotY: 0 };
+  if (product.category === "base") return { posX: 0, posY: -0.26, posZ: 0, rotX: 0, rotY: 0, rotZ: 0 };
   if (product.category === "wall" || product.category === "structure") {
-    return { posX: 0, posY: 0.3, posZ: -2.5, rotY: 0 };
+    return { posX: 0, posY: 0.3, posZ: -2.5, rotX: 0, rotY: 0, rotZ: 0 };
   }
 
   return { ...DEFAULT_TRANSFORM, posX: instanceIndex * 1.5 - 1.5, posZ: instanceIndex * 0.5 };
@@ -174,6 +176,40 @@ export const useBuilderStore = create<BuilderStore>()(
               },
             },
           };
+        });
+      },
+
+      removeAccessoryInstance(productId: string, instanceIndex: number) {
+        set((state) => {
+          const item = state.accessories[productId];
+          if (!item) return state;
+
+          const nextQuantity = Math.max(0, item.quantity - 1);
+          const nextAccessories = { ...state.accessories };
+
+          if (nextQuantity === 0) {
+            delete nextAccessories[productId];
+            return { accessories: nextAccessories, activeProjectId: null };
+          }
+
+          const nextTransforms: Record<string, ItemTransform> = {};
+          let nextIndex = 0;
+          for (let oldIndex = 0; oldIndex < item.quantity; oldIndex++) {
+            if (oldIndex === instanceIndex) continue;
+            const oldKey = `${productId}:${oldIndex}`;
+            const newKey = `${productId}:${nextIndex}`;
+            nextTransforms[newKey] =
+              item.transforms[oldKey] ?? defaultTransformFor(item.product, nextIndex);
+            nextIndex++;
+          }
+
+          nextAccessories[productId] = {
+            ...item,
+            quantity: nextQuantity,
+            transforms: nextTransforms,
+          };
+
+          return { accessories: nextAccessories, activeProjectId: null };
         });
       },
 

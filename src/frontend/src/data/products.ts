@@ -1,0 +1,373 @@
+import type { Product } from "@/types";
+
+export const PRODUCTS: Product[] = [
+  // ── Indian Garage – Bases ────────────────────────────────────
+  {
+    id: "ig-base-concrete",
+    name: "Concrete Workshop Floor",
+    scale: "1:64",
+    category: "base",
+    environments: ["indian_garage"],
+    price: 149900,
+    thumbnailPlaceholder: "/assets/placeholders/base-concrete.svg",
+    description:
+      "Raw concrete textured floor module. Realistic aggregate finish, expansion joints and oil stain weathering included.",
+    bomType: "base_module",
+    layerType: "floor",
+    layerOrder: 1,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+  {
+    id: "ig-base-tiled",
+    name: "Tiled Workshop Floor",
+    scale: "1:64",
+    category: "base",
+    environments: ["indian_garage"],
+    price: 179900,
+    thumbnailPlaceholder: "/assets/placeholders/base-tiled.svg",
+    description:
+      "Classic garage tiled floor with grey and white chequerboard pattern. Scale-accurate grout lines and chip weathering.",
+    bomType: "base_module",
+    layerType: "floor",
+    layerOrder: 1,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+  {
+    id: "ig-base-industrial",
+    name: "Industrial Floor",
+    scale: "1:64",
+    category: "base",
+    environments: ["indian_garage"],
+    price: 159900,
+    thumbnailPlaceholder: "/assets/placeholders/base-industrial.svg",
+    description:
+      "Heavy-duty industrial flooring with anti-slip diamond plate sections and drainage channels.",
+    bomType: "base_module",
+    layerType: "floor",
+    layerOrder: 1,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+
+  // ── Indian Garage – Walls ────────────────────────────────────
+  {
+    id: "ig-wall-plain",
+    name: "Plain Wall",
+    scale: "1:64",
+    category: "wall",
+    environments: ["indian_garage"],
+    price: 129900,
+    thumbnailPlaceholder: "/assets/placeholders/wall-plain.svg",
+    description:
+      "Clean painted plaster wall with realistic texture. Ideal base for decal application.",
+    bomType: "wall_module",
+    layerType: "wall",
+    layerOrder: 2,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+  {
+    id: "ig-wall-corrugated",
+    name: "Corrugated Wall",
+    scale: "1:64",
+    category: "wall",
+    environments: ["indian_garage"],
+    price: 149900,
+    thumbnailPlaceholder: "/assets/placeholders/wall-corrugated.svg",
+    description:
+      "Corrugated steel cladding wall panel. Rust-weathered finish with riveted seams.",
+    bomType: "wall_module",
+    layerType: "wall",
+    layerOrder: 2,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+  {
+    id: "ig-wall-brick",
+    name: "Brick Wall",
+    scale: "1:64",
+    category: "wall",
+    environments: ["indian_garage"],
+    price: 169900,
+    thumbnailPlaceholder: "/assets/placeholders/wall-brick.svg",
+    description:
+      "Indian hand-laid brick wall with mortar texture. Aged with faded lime wash patina.",
+    bomType: "wall_module",
+    layerType: "wall",
+    layerOrder: 2,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+
+  // ── Indian Garage – Accessories ──────────────────────────────
+  {
+    id: "ig-acc-toolcab",
+    name: "Tool Cabinet",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_garage"],
+    price: 89900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-toolcab.svg",
+    description:
+      "Multi-drawer steel tool cabinet in racing red. Handles and label plates scale-accurate.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+  {
+    id: "ig-acc-tyrerack",
+    name: "Tyre Rack",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_garage"],
+    price: 69900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-tyrerack.svg",
+    description:
+      "Three-tier tyre storage rack with four 1:64 scale tyres included.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+  {
+    id: "ig-acc-compressor",
+    name: "Air Compressor",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_garage"],
+    price: 79900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-compressor.svg",
+    description:
+      "Vertical tank air compressor with resin-cast detail. Includes scale hose reel.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "cylinder",
+  },
+  {
+    id: "ig-acc-oildrum",
+    name: "Oil Drums (Set of 3)",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_garage"],
+    price: 59900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-oildrum.svg",
+    description:
+      "Classic 200-litre oil drums in weathered steel. Branded with fictional Indian motor oil decals.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "cylinder",
+  },
+  {
+    id: "ig-acc-lift",
+    name: "Two Post Lift",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_garage"],
+    price: 189900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-lift.svg",
+    description:
+      "Fully detailed two-post hydraulic car lift. Articulated arms, scale-accurate safety locks.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+  {
+    id: "ig-acc-workbench",
+    name: "Workbench",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_garage"],
+    price: 99900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-workbench.svg",
+    description:
+      "Heavy-duty steel workbench with pegboard back panel. Tools and vice included.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+
+  // ── Indian Fuel Station – Bases ──────────────────────────────
+  {
+    id: "ifs-base-urban",
+    name: "Urban Forecourt Base",
+    scale: "1:64",
+    category: "base",
+    environments: ["indian_fuel_station"],
+    price: 169900,
+    thumbnailPlaceholder: "/assets/placeholders/base-urban-forecourt.svg",
+    description:
+      "City forecourt base with painted lane markings and kerb edging. Scale tarmac texture.",
+    bomType: "base_module",
+    layerType: "floor",
+    layerOrder: 1,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+  {
+    id: "ifs-base-highway",
+    name: "Highway Forecourt Base",
+    scale: "1:64",
+    category: "base",
+    environments: ["indian_fuel_station"],
+    price: 189900,
+    thumbnailPlaceholder: "/assets/placeholders/base-highway-forecourt.svg",
+    description:
+      "Open highway forecourt with extended approach lanes. Includes speed breaker detail.",
+    bomType: "base_module",
+    layerType: "floor",
+    layerOrder: 1,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+
+  // ── Indian Fuel Station – Structures ─────────────────────────
+  {
+    id: "ifs-struct-basic-canopy",
+    name: "Basic Canopy",
+    scale: "1:64",
+    category: "structure",
+    environments: ["indian_fuel_station"],
+    price: 249900,
+    thumbnailPlaceholder: "/assets/placeholders/struct-basic-canopy.svg",
+    description:
+      "Single-bay flat canopy with steel fascia. Blank panels ready for decal branding.",
+    bomType: "structure_module",
+    layerType: "wall",
+    layerOrder: 2,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+  {
+    id: "ifs-struct-highway-canopy",
+    name: "Highway Canopy",
+    scale: "1:64",
+    category: "structure",
+    environments: ["indian_fuel_station"],
+    price: 349900,
+    thumbnailPlaceholder: "/assets/placeholders/struct-highway-canopy.svg",
+    description:
+      "Wide-span highway canopy covering dual pump bays. LED fascia strip detail included.",
+    bomType: "structure_module",
+    layerType: "wall",
+    layerOrder: 2,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+
+  // ── Indian Fuel Station – Accessories ────────────────────────
+  {
+    id: "ifs-acc-pump",
+    name: "Fuel Pump",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_fuel_station"],
+    price: 119900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-fuelpump.svg",
+    description:
+      "Modern fuel dispenser unit with nozzle detail and digital display fascia.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "cone",
+  },
+  {
+    id: "ifs-acc-signboard",
+    name: "Signboard",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_fuel_station"],
+    price: 69900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-signboard.svg",
+    description:
+      "Pylon price signboard with interchangeable digit inserts. Includes mounting pole.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "sphere",
+  },
+  {
+    id: "ifs-acc-airstation",
+    name: "Air Station",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_fuel_station"],
+    price: 59900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-airstation.svg",
+    description:
+      "Tyre inflation station with digital gauge and coil hose. Wall-mounted bracket included.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "cylinder",
+  },
+  {
+    id: "ifs-acc-barriers",
+    name: "Safety Barriers (Set of 4)",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_fuel_station"],
+    price: 49900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-barriers.svg",
+    description:
+      "Yellow and black safety bollards with reflective band detail.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "cylinder",
+  },
+  {
+    id: "ifs-acc-utilitycab",
+    name: "Utility Cabinet",
+    scale: "1:64",
+    category: "accessory",
+    environments: ["indian_fuel_station"],
+    price: 79900,
+    thumbnailPlaceholder: "/assets/placeholders/acc-utilitycab.svg",
+    description:
+      "Outdoor utility cabinet for forecourt tools and safety equipment storage.",
+    bomType: "accessory_item",
+    layerType: "accessory",
+    layerOrder: 3,
+    stlUrl: null,
+    geometryHint: "box",
+  },
+];
+
+export function getProductsByEnvironment(env: Environment): Product[] {
+  return PRODUCTS.filter((p) => p.environments.includes(env));
+}
+
+export function getProductsByCategory(
+  env: Environment,
+  category: Product["category"],
+): Product[] {
+  return PRODUCTS.filter(
+    (p) => p.environments.includes(env) && p.category === category,
+  );
+}
+
+export function formatPrice(paise: number): string {
+  return `₹${(paise / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
+}
+
+type Environment = "indian_garage" | "indian_fuel_station";

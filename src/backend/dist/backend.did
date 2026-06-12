@@ -1,0 +1,144 @@
+type Transform3D = 
+ record {
+   posX: float64;
+   posY: float64;
+   posZ: float64;
+   rotX: float64;
+   rotY: float64;
+   rotZ: float64;
+ };
+type Timestamp = int;
+type ShippingAddress = 
+ record {
+   city: text;
+   country: text;
+   line1: text;
+   line2: opt text;
+   pincode: text;
+   state: text;
+ };
+type Scale = variant {scale1_64;};
+type ProductId = nat;
+type Product = 
+ record {
+   bomType: BomType;
+   category: Category;
+   description: text;
+   environments: vec Environment;
+   id: ProductId;
+   name: text;
+   price: nat;
+   scale: Scale;
+   stlUrl: opt text;
+   thumbnailPlaceholder: text;
+ };
+type PaymentStatus = 
+ variant {
+   mockPaid;
+   pending;
+ };
+type OrderId = nat;
+type Order = 
+ record {
+   contact: ContactDetails;
+   createdAt: Timestamp;
+   id: OrderId;
+   items: vec CartItem;
+   paymentStatus: PaymentStatus;
+   shippingAddress: ShippingAddress;
+   subtotal: nat;
+ };
+type KitItem = 
+ record {
+   productId: ProductId;
+   quantity: nat;
+   transform: opt Transform3D;
+ };
+type Environment = 
+ variant {
+   indianFuelStation;
+   indianGarage;
+ };
+type ContactDetails = 
+ record {
+   email: text;
+   firstName: text;
+   lastName: text;
+   phone: text;
+ };
+type ConfiguredKit = 
+ record {
+   bom: vec BomItem;
+   environment: Environment;
+   items: vec KitItem;
+   name: text;
+   scale: Scale;
+   totalPrice: nat;
+ };
+type Category = 
+ variant {
+   accessory;
+   base;
+   decal;
+   kit;
+   structure;
+   wall;
+ };
+type CartItemKind = 
+ variant {
+   configuredKit: ConfiguredKit;
+   singleProduct: record {product: Product;};
+ };
+type CartItemId = nat;
+type CartItem = 
+ record {
+   id: CartItemId;
+   kind: CartItemKind;
+   quantity: nat;
+   subtotal: nat;
+ };
+type BomType = 
+ variant {
+   accessory;
+   base;
+   decal;
+   kit;
+   structure;
+   wall;
+ };
+type BomItem = 
+ record {
+   product: Product;
+   quantity: nat;
+   totalPrice: nat;
+   unitPrice: nat;
+ };
+service : {
+  __cartItems: (io: opt nat, count: opt nat) -> (vec CartItem) query;
+  __cartState: () -> (reserved) query;
+  __orderState: () -> (reserved) query;
+  __orders: (ko: opt OrderId, count: opt nat) ->
+   (vec record {
+          OrderId;
+          Order;
+        }) query;
+  __products: (ko: opt ProductId, count: opt nat) ->
+   (vec record {
+          ProductId;
+          Product;
+        }) query;
+  __state: () -> (reserved) query;
+  addKitToCart: (kit: ConfiguredKit) -> (CartItemId);
+  addProductToCart: (productId: ProductId, quantity: nat) -> (CartItemId);
+  getCart: () -> (vec CartItem) query;
+  getCartSubtotal: () -> (nat) query;
+  getOrder: (id: OrderId) -> (opt Order) query;
+  getProductById: (id: ProductId) -> (opt Product) query;
+  getProducts: () -> (vec Product) query;
+  getProductsByCategory: (category: Category) -> (vec Product) query;
+  getProductsByEnvironment: (env: Environment) -> (vec Product) query;
+  placeOrder: (contact: ContactDetails, address: ShippingAddress) -> (Order);
+  removeFromCart: (itemId: CartItemId) -> (bool);
+  setProductStlUrl: (id: ProductId, stlUrl: opt text) -> (bool);
+  updateCartItemQuantity: (itemId: CartItemId, quantity: nat) -> (bool);
+}

@@ -1,0 +1,24 @@
+{
+  "overview": "MyScaledWorld Diorama Builder is an e-commerce platform where scale model collectors configure modular diorama kits with a real-time 3D preview, bill of materials, and checkout flow.",
+  "features": [
+    "Interactive 3D configurator with Three.js STL rendering and placeholder geometries",
+    "Left-panel parts list with per-item quantity selectors",
+    "Right-panel live 3D preview with orbit controls and basic item transforms",
+    "Object-storage integration for admin STL file uploads",
+    "Auto-generated bill of materials with quantity aggregation",
+    "Add complete configured kit to cart with BOM breakdown",
+    "Shop catalog, checkout flow, and order confirmation",
+    "Premium dark aesthetic for collectors"
+  ],
+  "category": "e-commerce",
+  "tags": [
+    "3d",
+    "configurator",
+    "diorama",
+    "scale-models",
+    "collectors",
+    "stl",
+    "threejs"
+  ],
+  "last_updated": "2026-06-12T17:26:14.194Z"
+}

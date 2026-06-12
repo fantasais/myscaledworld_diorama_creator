@@ -1,21 +1,10 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/data/products";
 import { useBuilderStore } from "@/store/builderStore";
 import { useCartStore } from "@/store/cartStore";
 import type { BomLine } from "@/types";
 import { useNavigate } from "@tanstack/react-router";
-import { ShoppingCart, Trash2 } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 
 function buildBomLines(
@@ -59,23 +48,26 @@ export function BomSummary() {
   const bom = buildBomLines(store);
   const total = bom.reduce((s, l) => s + l.totalPrice, 0);
   const canAdd = !!store.environment && !!store.selectedBase;
-  const hasAny = bom.length > 0;
 
   function handleAddToCart() {
     if (!store.environment) return;
-    addConfiguredKit(bom, store.environment, "1:64");
+    const sceneObjects = store.getSceneObjects();
+    const activeProject = store.savedProjects.find(
+      (project) => project.id === store.activeProjectId,
+    );
+    addConfiguredKit(
+      bom,
+      store.environment,
+      store.scale,
+      activeProject?.name,
+      sceneObjects,
+      store.activeProjectId,
+    );
     store.reset();
     toast.success("Kit added to cart!", {
       description: "Your configured diorama kit is ready for checkout.",
     });
     navigate({ to: "/cart" });
-  }
-
-  function handleClearAll() {
-    store.reset();
-    toast.info("Scene cleared.", {
-      description: "All parts have been removed.",
-    });
   }
 
   return (
@@ -87,49 +79,11 @@ export function BomSummary() {
         <h3 className="font-display text-sm font-semibold text-foreground">
           Bill of Materials
         </h3>
-        <div className="flex items-center gap-2">
-          {bom.length > 0 && (
-            <span className="font-mono text-xs text-muted-foreground">
-              {bom.length} items
-            </span>
-          )}
-          {hasAny && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-1 text-xs text-destructive/80 hover:text-destructive transition-colors px-1.5 py-0.5 rounded hover:bg-destructive/10"
-                  data-ocid="bom.clear_all_button"
-                  title="Clear all parts and reset scene"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Clear All
-                </button>
-              </AlertDialogTrigger>
-              <AlertDialogContent data-ocid="bom.clear_dialog">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Reset the scene?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will remove all selected parts, clear the 3D scene, and
-                    reset all quantities to zero. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel data-ocid="bom.clear_cancel_button">
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleClearAll}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    data-ocid="bom.clear_confirm_button"
-                  >
-                    Yes, reset scene
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </div>
+        {bom.length > 0 && (
+          <span className="font-mono text-xs text-muted-foreground">
+            {bom.length} BOM lines · {store.getSceneObjects().length} scene objects
+          </span>
+        )}
       </div>
 
       {bom.length === 0 ? (
@@ -199,3 +153,4 @@ export function BomSummary() {
     </div>
   );
 }
+

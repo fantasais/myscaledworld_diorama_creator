@@ -72,7 +72,7 @@ export function BomSummary() {
 
   return (
     <div
-      className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3"
+      className="flex h-full min-h-0 flex-col gap-3 rounded-xl border border-border bg-card p-4"
       data-ocid="bom.panel"
     >
       <div className="flex items-center justify-between">
@@ -88,7 +88,7 @@ export function BomSummary() {
 
       {bom.length === 0 ? (
         <div
-          className="flex flex-col items-center py-5 text-center"
+          className="flex min-h-0 flex-1 flex-col items-center justify-center py-5 text-center"
           data-ocid="bom.empty_state"
         >
           <span className="text-2xl mb-2">📦</span>
@@ -97,7 +97,7 @@ export function BomSummary() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col divide-y divide-border/30">
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1 divide-y divide-border/30">
           {bom.map((line, i) => (
             <div
               key={line.product.id}

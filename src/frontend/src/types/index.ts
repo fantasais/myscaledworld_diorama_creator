@@ -96,7 +96,7 @@ export interface ItemTransform {
 export type SceneObjectKind = "base" | "wall" | "structure" | "accessory";
 
 export interface SceneObject {
-  id: string; // stable instance id: productId:index for accessories; productId:base/wall for fixed modules
+  id: string; // stable instance id: productId:kind:index
   kind: SceneObjectKind;
   productId: string;
   product: Product;
@@ -121,6 +121,10 @@ export interface SavedProject {
   environment: Environment | null;
   selectedBase: Product | null;
   selectedWall: Product | null;
+  baseQuantity: number;
+  wallQuantity: number;
+  baseTransforms: Record<string, ItemTransform>;
+  wallTransforms: Record<string, ItemTransform>;
   accessories: Record<string, SelectedItem>;
   sceneObjects: SceneObject[];
   createdAt: string;
@@ -132,6 +136,10 @@ export interface BuilderStore {
   environment: Environment | null;
   selectedBase: Product | null;
   selectedWall: Product | null;
+  baseQuantity: number;
+  wallQuantity: number;
+  baseTransforms: Record<string, ItemTransform>;
+  wallTransforms: Record<string, ItemTransform>;
   accessories: Record<string, SelectedItem>; // keyed by product.id
   savedProjects: SavedProject[];
   activeProjectId: string | null;
@@ -139,13 +147,26 @@ export interface BuilderStore {
   setEnvironment: (env: Environment) => void;
   setBase: (product: Product | null) => void;
   setWall: (product: Product | null) => void;
+  setBaseQty: (product: Product, qty: number) => void;
+  setWallQty: (product: Product, qty: number) => void;
   setAccessoryQty: (product: Product, qty: number) => void;
   updateTransform: (
     productId: string,
     instanceIndex: number,
     t: Partial<ItemTransform>,
   ) => void;
+  updateSceneObjectTransform: (
+    kind: SceneObjectKind,
+    productId: string,
+    instanceIndex: number,
+    t: Partial<ItemTransform>,
+  ) => void;
   removeAccessoryInstance: (productId: string, instanceIndex: number) => void;
+  removeSceneObjectInstance: (
+    kind: SceneObjectKind,
+    productId: string,
+    instanceIndex: number,
+  ) => void;
   getSceneObjects: () => SceneObject[];
   saveProject: (name: string) => SavedProject;
   loadProject: (projectId: string) => void;

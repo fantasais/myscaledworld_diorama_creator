@@ -8,6 +8,7 @@ export function ProjectPanel() {
   const {
     environment,
     selectedBase,
+    baseQuantity,
     savedProjects,
     activeProjectId,
     saveProject,
@@ -16,7 +17,7 @@ export function ProjectPanel() {
   } = useBuilderStore();
   const [projectName, setProjectName] = useState("");
 
-  const canSave = Boolean(environment && selectedBase);
+  const canSave = Boolean(environment && selectedBase && baseQuantity > 0);
 
   function handleSave() {
     const project = saveProject(projectName);
@@ -100,3 +101,4 @@ export function ProjectPanel() {
     </div>
   );
 }
+

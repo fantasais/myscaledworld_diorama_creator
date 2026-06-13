@@ -413,15 +413,46 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
+export const STL_URL_OVERRIDES_KEY = "msw-product-stl-url-overrides";
+
+export function getProductStlOverrides(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(window.localStorage.getItem(STL_URL_OVERRIDES_KEY) ?? "{}") as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+export function saveProductStlOverride(productId: string, stlUrl: string | null) {
+  if (typeof window === "undefined") return;
+  const current = getProductStlOverrides();
+  if (stlUrl) current[productId] = stlUrl;
+  else delete current[productId];
+  window.localStorage.setItem(STL_URL_OVERRIDES_KEY, JSON.stringify(current));
+}
+
+export function withProductAssetOverrides(products: Product[]): Product[] {
+  const overrides = getProductStlOverrides();
+  return products.map((product) => ({
+    ...product,
+    stlUrl: overrides[product.id] ?? product.stlUrl,
+  }));
+}
+
+export function getProducts(): Product[] {
+  return withProductAssetOverrides(PRODUCTS);
+}
+
 export function getProductsByEnvironment(env: Environment): Product[] {
-  return PRODUCTS.filter((p) => p.environments.includes(env));
+  return getProducts().filter((p) => p.environments.includes(env));
 }
 
 export function getProductsByCategory(
   env: Environment,
   category: Product["category"],
 ): Product[] {
-  return PRODUCTS.filter(
+  return getProducts().filter(
     (p) => p.environments.includes(env) && p.category === category,
   );
 }

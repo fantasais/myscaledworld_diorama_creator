@@ -111,6 +111,7 @@ interface ItemInstanceProps {
   onSelect: () => void;
   onTransformChange: (t: Partial<ItemTransform>) => void;
   onDelete: () => void;
+  onTransformActiveChange: (active: boolean) => void;
 }
 
 function ItemInstance({
@@ -120,8 +121,10 @@ function ItemInstance({
   onSelect,
   onTransformChange,
   onDelete,
+  onTransformActiveChange,
 }: ItemInstanceProps) {
   const groupRef = useRef<THREE.Group>(null);
+  const transformSyncRaf = useRef<number | null>(null);
   const color = CATEGORY_COLOR[obj.product.category] ?? "#888";
   const transform: ItemTransform = {
     rotX: 0,
@@ -146,7 +149,25 @@ function ItemInstance({
       rotY: group.rotation.y,
       rotZ: group.rotation.z,
     });
-  }, [obj.kind, obj.locked, onTransformChange]);
+  }, [obj.locked, onTransformChange]);
+
+  const syncTransformDuringDrag = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (transformSyncRaf.current !== null) return;
+
+    transformSyncRaf.current = window.requestAnimationFrame(() => {
+      transformSyncRaf.current = null;
+      persistCurrentTransform();
+    });
+  }, [persistCurrentTransform]);
+
+  useEffect(() => {
+    return () => {
+      if (transformSyncRaf.current !== null && typeof window !== "undefined") {
+        window.cancelAnimationFrame(transformSyncRaf.current);
+      }
+    };
+  }, []);
 
   const selectObject = useCallback(
     (e: { stopPropagation: () => void }) => {
@@ -221,16 +242,28 @@ function ItemInstance({
 
   if (selected && !obj.locked) {
     return (
-      <TransformControls
-        mode={transformMode}
-        size={0.85}
-        showX
-        showY
-        showZ
-        onMouseUp={persistCurrentTransform}
-      >
+      <>
         {group}
-      </TransformControls>
+        {groupRef.current && (
+          <TransformControls
+            object={groupRef.current}
+            mode={transformMode}
+            size={0.95}
+            showX
+            showY
+            showZ
+            onMouseDown={(event) => {
+              event?.stopPropagation?.();
+              onTransformActiveChange(true);
+            }}
+            onObjectChange={syncTransformDuringDrag}
+            onMouseUp={() => {
+              onTransformActiveChange(false);
+              persistCurrentTransform();
+            }}
+          />
+        )}
+      </>
     );
   }
 
@@ -269,6 +302,7 @@ function SceneContent({
   const getSceneObjects = useBuilderStore((s) => s.getSceneObjects);
   const updateSceneObjectTransform = useBuilderStore((s) => s.updateSceneObjectTransform);
   const removeSceneObjectInstance = useBuilderStore((s) => s.removeSceneObjectInstance);
+  const [transformActive, setTransformActive] = useState(false);
 
   const sceneObjects = useMemo(
     () => getSceneObjects(),
@@ -322,10 +356,11 @@ function SceneContent({
               setSelected(null);
             }
           }}
+          onTransformActiveChange={setTransformActive}
         />
       ))}
 
-      <OrbitControls makeDefault enableDamping dampingFactor={0.08} enablePan enableZoom enableRotate />
+      <OrbitControls makeDefault enabled={!transformActive} enableDamping dampingFactor={0.08} enablePan enableZoom enableRotate />
     </>
   );
 }
@@ -432,7 +467,7 @@ export function ThreeScene() {
               </div>
 
               <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Drag the colored gizmo handles for X/Y/Z placement or rotation. Keyboard arrows are only a backup now.
+                Drag the colored gizmo arrows/rings with the mouse. Orbit is temporarily disabled while you drag a gizmo handle.
               </p>
             </div>
           )}

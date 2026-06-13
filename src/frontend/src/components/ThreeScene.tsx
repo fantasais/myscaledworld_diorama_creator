@@ -17,6 +17,12 @@ const CATEGORY_COLOR: Record<string, string> = {
   kit: "#8c6fc0",
 };
 
+const GRID_CELL_MM = 10;
+const GRID_SIZE_CELLS = 30;
+const GRID_SIZE_UNITS = GRID_SIZE_CELLS;
+const MOVE_SNAP = 1;
+const ROTATE_SNAP = Math.PI / 4;
+
 type TransformMode = "translate" | "rotate";
 
 type SelectedInstance = {
@@ -124,7 +130,6 @@ function ItemInstance({
   onTransformActiveChange,
 }: ItemInstanceProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const transformSyncRaf = useRef<number | null>(null);
   const color = CATEGORY_COLOR[obj.product.category] ?? "#888";
   const transform: ItemTransform = {
     rotX: 0,
@@ -151,24 +156,6 @@ function ItemInstance({
     });
   }, [obj.locked, onTransformChange]);
 
-  const syncTransformDuringDrag = useCallback(() => {
-    if (typeof window === "undefined") return;
-    if (transformSyncRaf.current !== null) return;
-
-    transformSyncRaf.current = window.requestAnimationFrame(() => {
-      transformSyncRaf.current = null;
-      persistCurrentTransform();
-    });
-  }, [persistCurrentTransform]);
-
-  useEffect(() => {
-    return () => {
-      if (transformSyncRaf.current !== null && typeof window !== "undefined") {
-        window.cancelAnimationFrame(transformSyncRaf.current);
-      }
-    };
-  }, []);
-
   const selectObject = useCallback(
     (e: { stopPropagation: () => void }) => {
       e.stopPropagation();
@@ -192,11 +179,11 @@ function ItemInstance({
       e.preventDefault();
       e.stopPropagation();
 
-      if (e.key === "ArrowLeft") onTransformChange({ posX: transform.posX - 0.2 });
-      if (e.key === "ArrowRight") onTransformChange({ posX: transform.posX + 0.2 });
-      if (e.key === "ArrowUp") onTransformChange({ posZ: transform.posZ - 0.2 });
-      if (e.key === "ArrowDown") onTransformChange({ posZ: transform.posZ + 0.2 });
-      if (e.key === "r" || e.key === "R") onTransformChange({ rotY: (transform.rotY + Math.PI / 8) % (Math.PI * 2) });
+      if (e.key === "ArrowLeft") onTransformChange({ posX: transform.posX - MOVE_SNAP });
+      if (e.key === "ArrowRight") onTransformChange({ posX: transform.posX + MOVE_SNAP });
+      if (e.key === "ArrowUp") onTransformChange({ posZ: transform.posZ - MOVE_SNAP });
+      if (e.key === "ArrowDown") onTransformChange({ posZ: transform.posZ + MOVE_SNAP });
+      if (e.key === "r" || e.key === "R") onTransformChange({ rotY: (transform.rotY + ROTATE_SNAP) % (Math.PI * 2) });
       if (e.key === "Delete" || e.key === "Backspace") onDelete();
     };
 
@@ -242,28 +229,26 @@ function ItemInstance({
 
   if (selected && !obj.locked) {
     return (
-      <>
+      <TransformControls
+        mode={transformMode}
+        size={0.95}
+        showX
+        showY
+        showZ
+        translationSnap={MOVE_SNAP}
+        rotationSnap={ROTATE_SNAP}
+        onDraggingChanged={(event) => {
+          const active = Boolean(event.value);
+          onTransformActiveChange(active);
+          if (!active) persistCurrentTransform();
+        }}
+        onMouseUp={() => {
+          onTransformActiveChange(false);
+          persistCurrentTransform();
+        }}
+      >
         {group}
-        {groupRef.current && (
-          <TransformControls
-            object={groupRef.current}
-            mode={transformMode}
-            size={0.95}
-            showX
-            showY
-            showZ
-            onMouseDown={(event) => {
-              event?.stopPropagation?.();
-              onTransformActiveChange(true);
-            }}
-            onObjectChange={syncTransformDuringDrag}
-            onMouseUp={() => {
-              onTransformActiveChange(false);
-              persistCurrentTransform();
-            }}
-          />
-        )}
-      </>
+      </TransformControls>
     );
   }
 
@@ -274,10 +259,21 @@ function FloorGrid() {
   return (
     <>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, -0.3, 0]}>
-        <planeGeometry args={[20, 20]} />
-        <meshStandardMaterial color="#080b12" roughness={0.9} metalness={0.1} />
+        <planeGeometry args={[GRID_SIZE_UNITS, GRID_SIZE_UNITS]} />
+        <meshStandardMaterial color="#070a10" roughness={0.92} metalness={0.08} />
       </mesh>
-      <gridHelper args={[20, 20, "#2a2a4a", "#16162a"]} position={[0, -0.29, 0]} />
+      <gridHelper args={[GRID_SIZE_UNITS, GRID_SIZE_CELLS, "#5f6f86", "#263244"]} position={[0, -0.245, 0]} />
+      <gridHelper args={[GRID_SIZE_UNITS, GRID_SIZE_CELLS / 5, "#9aa4b2", "#354155"]} position={[0, -0.24, 0]} />
+      <axesHelper args={[2.5]} position={[0, -0.22, 0]} />
+      <Text position={[2.8, -0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} fontSize={0.18} color="#9aa4b2" anchorX="center">
+        X
+      </Text>
+      <Text position={[0, -0.1, 2.8]} rotation={[-Math.PI / 2, 0, 0]} fontSize={0.18} color="#9aa4b2" anchorX="center">
+        Z
+      </Text>
+      <Text position={[0, -0.12, -GRID_SIZE_UNITS / 2 + 1.1]} rotation={[-Math.PI / 2, 0, 0]} fontSize={0.22} color="#b7c1d1" anchorX="center">
+        1 grid square = {GRID_CELL_MM} mm × {GRID_CELL_MM} mm
+      </Text>
     </>
   );
 }
@@ -303,6 +299,16 @@ function SceneContent({
   const updateSceneObjectTransform = useBuilderStore((s) => s.updateSceneObjectTransform);
   const removeSceneObjectInstance = useBuilderStore((s) => s.removeSceneObjectInstance);
   const [transformActive, setTransformActive] = useState(false);
+
+  useEffect(() => {
+    const releaseControls = () => setTransformActive(false);
+    window.addEventListener("pointerup", releaseControls, true);
+    window.addEventListener("blur", releaseControls);
+    return () => {
+      window.removeEventListener("pointerup", releaseControls, true);
+      window.removeEventListener("blur", releaseControls);
+    };
+  }, []);
 
   const sceneObjects = useMemo(
     () => getSceneObjects(),
@@ -397,7 +403,7 @@ export function ThreeScene() {
   const rotateSelected = (direction: 1 | -1) => {
     if (!selected || selected.locked || !selectedTransform) return;
     updateSceneObjectTransform(selected.kind, selected.productId, selected.instanceIndex, {
-      rotY: (selectedTransform.rotY + direction * Math.PI / 8) % (Math.PI * 2),
+      rotY: (selectedTransform.rotY + direction * ROTATE_SNAP) % (Math.PI * 2),
     });
   };
 
@@ -408,14 +414,14 @@ export function ThreeScene() {
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-[#080b12]" data-ocid="builder.three_canvas">
+    <div className="relative w-full h-full overflow-hidden bg-[#080b12]" style={{ touchAction: "none" }} data-ocid="builder.three_canvas">
       <Canvas shadows camera={{ position: [6, 5, 8], fov: 45 }} gl={{ antialias: true, alpha: false }} style={{ background: "#080b12" }}>
         <SceneContent selectedId={selected?.id ?? null} setSelected={setSelected} transformMode={transformMode} />
       </Canvas>
 
       <div className="absolute left-3 bottom-3 pointer-events-none">
         <p className="text-xs text-muted-foreground/70 bg-card/80 backdrop-blur-sm px-2 py-1 rounded border border-border/50">
-          Orbit/Pan/Zoom view · Click an object · Use Move/Rotate gizmo · Arrow keys still work as backup
+          Orbit/Pan/Zoom view · Click an object · 1 grid square = 10 mm × 10 mm · Move snap = 10 mm · Rotate snap = 45°
         </p>
       </div>
 
@@ -467,7 +473,7 @@ export function ThreeScene() {
               </div>
 
               <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Drag the colored gizmo arrows/rings with the mouse. Orbit is temporarily disabled while you drag a gizmo handle.
+                Drag the colored gizmo arrows/rings with the mouse. Move snaps to one 10 mm grid square. Rotation snaps to 45°. Orbit is temporarily disabled only while dragging a gizmo handle.
               </p>
             </div>
           )}

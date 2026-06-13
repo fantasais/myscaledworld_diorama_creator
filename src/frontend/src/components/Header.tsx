@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { to: "/", label: "Home" },
   { to: "/shop", label: "Shop" },
   { to: "/builder", label: "Builder" },
+  { to: "/admin", label: "Admin" },
 ] as const;
 
 export function Header() {
@@ -116,3 +117,4 @@ export function Header() {
     </header>
   );
 }
+

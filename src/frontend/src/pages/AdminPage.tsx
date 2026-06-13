@@ -1,6 +1,6 @@
 import { createActor } from "@/backend";
 import { Button } from "@/components/ui/button";
-import { PRODUCTS } from "@/data/products";
+import { getProducts, saveProductStlOverride } from "@/data/products";
 import type { Product } from "@/types";
 import { useActor } from "@caffeineai/core-infrastructure";
 import { ExternalBlob } from "@caffeineai/object-storage";
@@ -15,15 +15,23 @@ interface UploadState {
   errorMsg?: string;
 }
 
+function normaliseProductName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\(.*?\)/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
 export function AdminPage() {
   const { actor } = useActor(createActor);
   const [stlUrls, setStlUrls] = useState<Record<string, string | null>>(() => {
     const init: Record<string, string | null> = {};
-    for (const p of PRODUCTS) init[p.id] = p.stlUrl;
+    for (const p of getProducts()) init[p.id] = p.stlUrl;
     return init;
   });
   const [uploads, setUploads] = useState<Record<string, UploadState>>({});
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const demoObjectUrls = useRef<Record<string, string>>({});
 
   function setUploadState(productId: string, patch: Partial<UploadState>) {
     setUploads((prev) => ({
@@ -37,17 +45,32 @@ export function AdminPage() {
   }
 
   async function handleUpload(product: Product, file: File) {
+    setUploadState(product.id, { status: "uploading", progress: 0 });
+
     if (!actor) {
-      toast.error("Backend not connected");
+      const previousUrl = demoObjectUrls.current[product.id];
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+      const demoUrl = URL.createObjectURL(file);
+      demoObjectUrls.current[product.id] = demoUrl;
+      saveProductStlOverride(product.id, demoUrl);
+      setStlUrls((prev) => ({ ...prev, [product.id]: demoUrl }));
+      setUploadState(product.id, { status: "done", progress: 100 });
+      toast.success(`Demo STL attached for ${product.name}`, {
+        description: "This frontend-only preview stays active in the current browser session.",
+      });
       return;
     }
-    setUploadState(product.id, { status: "uploading", progress: 0 });
+
     try {
       // Fetch the backend product to obtain its bigint ID
       const backendProducts = await actor.getProducts();
-      const backendProduct = backendProducts.find(
-        (p) => p.name === product.name,
-      );
+      const productNameKey = normaliseProductName(product.name);
+      const backendProduct =
+        backendProducts.find((p) => normaliseProductName(p.name) === productNameKey) ??
+        backendProducts.find((p) => {
+          const backendNameKey = normaliseProductName(p.name);
+          return productNameKey.includes(backendNameKey) || backendNameKey.includes(productNameKey);
+        });
       if (!backendProduct) {
         throw new Error(`Product not found in backend: ${product.name}`);
       }
@@ -58,6 +81,7 @@ export function AdminPage() {
       const url = await blob.getDirectURL();
       // Store the URL in the backend using the real product bigint ID
       await actor.setProductStlUrl(backendProduct.id, url);
+      saveProductStlOverride(product.id, url);
       setStlUrls((prev) => ({ ...prev, [product.id]: url }));
       setUploadState(product.id, { status: "done", progress: 100 });
       toast.success(`STL uploaded for ${product.name}`);
@@ -82,12 +106,13 @@ export function AdminPage() {
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Upload STL files for each product. Once uploaded the 3D configurator
-          will render the real model.
+          will render the real model. If backend storage is unavailable, the page
+          falls back to a browser-session demo preview.
         </p>
       </div>
 
       <div className="flex flex-col gap-3">
-        {PRODUCTS.map((product, i) => {
+        {getProducts().map((product, i) => {
           const up = uploads[product.id];
           const currentUrl = stlUrls[product.id];
           const hasModel = !!currentUrl;
@@ -176,3 +201,4 @@ export function AdminPage() {
     </div>
   );
 }
+

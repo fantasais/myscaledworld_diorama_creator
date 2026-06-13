@@ -11,20 +11,20 @@ function buildBomLines(
   store: ReturnType<typeof useBuilderStore.getState>,
 ): BomLine[] {
   const lines: BomLine[] = [];
-  if (store.selectedBase) {
+  if (store.selectedBase && store.baseQuantity > 0) {
     lines.push({
       product: store.selectedBase,
-      quantity: 1,
+      quantity: store.baseQuantity,
       unitPrice: store.selectedBase.price,
-      totalPrice: store.selectedBase.price,
+      totalPrice: store.selectedBase.price * store.baseQuantity,
     });
   }
-  if (store.selectedWall) {
+  if (store.selectedWall && store.wallQuantity > 0) {
     lines.push({
       product: store.selectedWall,
-      quantity: 1,
+      quantity: store.wallQuantity,
       unitPrice: store.selectedWall.price,
-      totalPrice: store.selectedWall.price,
+      totalPrice: store.selectedWall.price * store.wallQuantity,
     });
   }
   for (const item of Object.values(store.accessories)) {
@@ -47,7 +47,7 @@ export function BomSummary() {
 
   const bom = buildBomLines(store);
   const total = bom.reduce((s, l) => s + l.totalPrice, 0);
-  const canAdd = !!store.environment && !!store.selectedBase;
+  const canAdd = !!store.environment && !!store.selectedBase && store.baseQuantity > 0;
 
   function handleAddToCart() {
     if (!store.environment) return;

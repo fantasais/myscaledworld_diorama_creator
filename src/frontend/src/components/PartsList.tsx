@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ProjectPanel } from "@/components/ProjectPanel";
-import { PRODUCTS, getProductsByCategory } from "@/data/products";
+import { getProductsByCategory } from "@/data/products";
 import { useBuilderStore } from "@/store/builderStore";
 import type { Environment, Product, Scale } from "@/types";
 import { ChevronDown, Minus, Plus } from "lucide-react";
@@ -97,34 +97,6 @@ function ProductRow({
   );
 }
 
-function RadioRow({
-  product,
-  selected,
-  onSelect,
-}: { product: Product; selected: boolean; onSelect: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`w-full flex items-center gap-2 py-2 px-2 rounded-lg border transition-colors text-left ${
-        selected
-          ? "border-primary bg-primary/10 text-foreground"
-          : "border-border/30 hover:border-primary/30 text-muted-foreground"
-      }`}
-      data-ocid={`parts.select.${product.id}`}
-    >
-      <div
-        className={`w-3 h-3 rounded-full border-2 shrink-0 ${
-          selected ? "border-primary bg-primary" : "border-muted-foreground/40"
-        }`}
-      />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold truncate">{product.name}</p>
-      </div>
-      {product.stlUrl && <span className="text-xs text-primary/70">3D</span>}
-    </button>
-  );
-}
 
 interface PartsListProps {
   onReset: () => void;
@@ -136,11 +108,13 @@ export function PartsList({ onReset }: PartsListProps) {
     environment,
     selectedBase,
     selectedWall,
+    baseQuantity,
+    wallQuantity,
     accessories,
     setScale,
     setEnvironment,
-    setBase,
-    setWall,
+    setBaseQty,
+    setWallQty,
     setAccessoryQty,
   } = useBuilderStore();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -154,11 +128,7 @@ export function PartsList({ onReset }: PartsListProps) {
 
   const bases = environment ? getProductsByCategory(environment, "base") : [];
   const wallCat = environment === "indian_fuel_station" ? "structure" : "wall";
-  const walls = environment
-    ? PRODUCTS.filter(
-        (p) => p.environments.includes(environment) && p.category === wallCat,
-      )
-    : [];
+  const walls = environment ? getProductsByCategory(environment, wallCat) : [];
   const accProducts = environment
     ? getProductsByCategory(environment, "accessory")
     : [];
@@ -236,20 +206,18 @@ export function PartsList({ onReset }: PartsListProps) {
             <div>
               <SectionHeader
                 label="Base"
-                count={selectedBase ? 1 : 0}
+                count={selectedBase ? baseQuantity : 0}
                 open={openSections.base ?? true}
                 onToggle={() => toggle("base")}
               />
               {(openSections.base ?? true) && (
                 <div className="mt-2 flex flex-col gap-1.5 pl-1">
                   {bases.map((p) => (
-                    <RadioRow
+                    <ProductRow
                       key={p.id}
                       product={p}
-                      selected={selectedBase?.id === p.id}
-                      onSelect={() =>
-                        setBase(selectedBase?.id === p.id ? null : p)
-                      }
+                      qty={selectedBase?.id === p.id ? baseQuantity : 0}
+                      onQtyChange={(v) => setBaseQty(p, v)}
                     />
                   ))}
                 </div>
@@ -262,20 +230,18 @@ export function PartsList({ onReset }: PartsListProps) {
                 label={
                   environment === "indian_fuel_station" ? "Structure" : "Walls"
                 }
-                count={selectedWall ? 1 : 0}
+                count={selectedWall ? wallQuantity : 0}
                 open={openSections.wall ?? true}
                 onToggle={() => toggle("wall")}
               />
               {(openSections.wall ?? true) && (
                 <div className="mt-2 flex flex-col gap-1.5 pl-1">
                   {walls.map((p) => (
-                    <RadioRow
+                    <ProductRow
                       key={p.id}
                       product={p}
-                      selected={selectedWall?.id === p.id}
-                      onSelect={() =>
-                        setWall(selectedWall?.id === p.id ? null : p)
-                      }
+                      qty={selectedWall?.id === p.id ? wallQuantity : 0}
+                      onQtyChange={(v) => setWallQty(p, v)}
                     />
                   ))}
                 </div>

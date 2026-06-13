@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useBuilderStore } from "@/store/builderStore";
-import type { GeometryHint, ItemTransform, Product, SceneObject } from "@/types";
+import type { GeometryHint, ItemTransform, Product, SceneObject, SceneObjectKind } from "@/types";
 import { OrbitControls, Text, TransformControls } from "@react-three/drei";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { RotateCcw, RotateCw, Trash2 } from "lucide-react";
@@ -21,6 +21,7 @@ type TransformMode = "translate" | "rotate";
 
 type SelectedInstance = {
   id: string;
+  kind: SceneObjectKind;
   productId: string;
   instanceIndex: number;
   productName: string;
@@ -133,7 +134,7 @@ function ItemInstance({
   };
 
   const persistCurrentTransform = useCallback(() => {
-    if (obj.locked || obj.kind !== "accessory") return;
+    if (obj.locked) return;
     const group = groupRef.current;
     if (!group) return;
 
@@ -213,12 +214,12 @@ function ItemInstance({
         outlineWidth={0.02}
         outlineColor="#000000"
       >
-        {obj.product.name}{obj.kind === "accessory" ? ` #${obj.instanceIndex + 1}` : ""}
+        {obj.product.name} #{obj.instanceIndex + 1}
       </Text>
     </group>
   );
 
-  if (selected && !obj.locked && obj.kind === "accessory") {
+  if (selected && !obj.locked) {
     return (
       <TransformControls
         mode={transformMode}
@@ -260,14 +261,27 @@ function SceneContent({
   const environment = useBuilderStore((s) => s.environment);
   const selectedBase = useBuilderStore((s) => s.selectedBase);
   const selectedWall = useBuilderStore((s) => s.selectedWall);
+  const baseQuantity = useBuilderStore((s) => s.baseQuantity);
+  const wallQuantity = useBuilderStore((s) => s.wallQuantity);
+  const baseTransforms = useBuilderStore((s) => s.baseTransforms);
+  const wallTransforms = useBuilderStore((s) => s.wallTransforms);
   const accessories = useBuilderStore((s) => s.accessories);
   const getSceneObjects = useBuilderStore((s) => s.getSceneObjects);
-  const updateTransform = useBuilderStore((s) => s.updateTransform);
-  const removeAccessoryInstance = useBuilderStore((s) => s.removeAccessoryInstance);
+  const updateSceneObjectTransform = useBuilderStore((s) => s.updateSceneObjectTransform);
+  const removeSceneObjectInstance = useBuilderStore((s) => s.removeSceneObjectInstance);
 
   const sceneObjects = useMemo(
     () => getSceneObjects(),
-    [getSceneObjects, selectedBase, selectedWall, accessories],
+    [
+      getSceneObjects,
+      selectedBase,
+      selectedWall,
+      baseQuantity,
+      wallQuantity,
+      baseTransforms,
+      wallTransforms,
+      accessories,
+    ],
   );
 
   return (
@@ -292,6 +306,7 @@ function SceneContent({
           onSelect={() =>
             setSelected({
               id: obj.id,
+              kind: obj.kind,
               productId: obj.productId,
               instanceIndex: obj.instanceIndex,
               productName: obj.product.name,
@@ -299,11 +314,11 @@ function SceneContent({
             })
           }
           onTransformChange={(t) => {
-            if (!obj.locked && obj.kind === "accessory") updateTransform(obj.productId, obj.instanceIndex, t);
+            if (!obj.locked) updateSceneObjectTransform(obj.kind, obj.productId, obj.instanceIndex, t);
           }}
           onDelete={() => {
-            if (!obj.locked && obj.kind === "accessory") {
-              removeAccessoryInstance(obj.productId, obj.instanceIndex);
+            if (!obj.locked) {
+              removeSceneObjectInstance(obj.kind, obj.productId, obj.instanceIndex);
               setSelected(null);
             }
           }}
@@ -318,25 +333,42 @@ function SceneContent({
 export function ThreeScene() {
   const [selected, setSelected] = useState<SelectedInstance>(null);
   const [transformMode, setTransformMode] = useState<TransformMode>("translate");
-  const updateTransform = useBuilderStore((s) => s.updateTransform);
-  const removeAccessoryInstance = useBuilderStore((s) => s.removeAccessoryInstance);
+  const updateSceneObjectTransform = useBuilderStore((s) => s.updateSceneObjectTransform);
+  const removeSceneObjectInstance = useBuilderStore((s) => s.removeSceneObjectInstance);
+  const selectedBase = useBuilderStore((s) => s.selectedBase);
+  const selectedWall = useBuilderStore((s) => s.selectedWall);
+  const baseQuantity = useBuilderStore((s) => s.baseQuantity);
+  const wallQuantity = useBuilderStore((s) => s.wallQuantity);
+  const baseTransforms = useBuilderStore((s) => s.baseTransforms);
+  const wallTransforms = useBuilderStore((s) => s.wallTransforms);
   const accessories = useBuilderStore((s) => s.accessories);
+  const getSceneObjects = useBuilderStore((s) => s.getSceneObjects);
 
   const selectedTransform = useMemo(() => {
     if (!selected || selected.locked) return null;
-    return accessories[selected.productId]?.transforms[`${selected.productId}:${selected.instanceIndex}`] ?? null;
-  }, [accessories, selected]);
+    return getSceneObjects().find((obj) => obj.id === selected.id)?.transform ?? null;
+  }, [
+    getSceneObjects,
+    selected,
+    selectedBase,
+    selectedWall,
+    baseQuantity,
+    wallQuantity,
+    baseTransforms,
+    wallTransforms,
+    accessories,
+  ]);
 
   const rotateSelected = (direction: 1 | -1) => {
     if (!selected || selected.locked || !selectedTransform) return;
-    updateTransform(selected.productId, selected.instanceIndex, {
+    updateSceneObjectTransform(selected.kind, selected.productId, selected.instanceIndex, {
       rotY: (selectedTransform.rotY + direction * Math.PI / 8) % (Math.PI * 2),
     });
   };
 
   const deleteSelected = () => {
     if (!selected || selected.locked) return;
-    removeAccessoryInstance(selected.productId, selected.instanceIndex);
+    removeSceneObjectInstance(selected.kind, selected.productId, selected.instanceIndex);
     setSelected(null);
   };
 
@@ -363,7 +395,7 @@ export function ThreeScene() {
           </div>
 
           {selected.locked ? (
-            <p className="text-xs text-muted-foreground mt-2">Base and wall modules are locked for now. Accessories can be moved, rotated and removed.</p>
+            <p className="text-xs text-muted-foreground mt-2">This module is locked.</p>
           ) : (
             <div className="mt-3 space-y-3">
               <div className="grid grid-cols-2 gap-2 rounded-lg border border-border/70 bg-background/40 p-1">
